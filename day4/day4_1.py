@@ -4,27 +4,28 @@ from collections import Counter
 
 def check_password(code):
     codestr = str(code)
-    digits = [int(number) for number in codestr]
-    [(_, max_repeats)] = Counter(digits).most_common(1)
-
-    if max_repeats <= 1:
-        return 1
 
     if len(codestr) != 6:
        return 2
 
     previous = 0
+    two = False
     for i in codestr:
         if int(i) < previous:
             return 3
+        if int(i) == previous:
+            two = True
 
         previous = int(i)
 
-    return 0
+    if two:
+        return 0
+    else:
+        return 4
 
 assert(check_password(111111) == 0)
-assert(check_password(223450) == 3)
-assert(check_password(123789) == 1)
+assert(check_password(223450) != 0)
+assert(check_password(123789) != 0)
 
 valid = 0
 for code in range(235741, 706948+1):

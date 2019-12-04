@@ -4,11 +4,6 @@ from collections import Counter
 
 def check_password(code):
     codestr = str(code)
-    digits = [int(number) for number in codestr]
-    [(_, max_repeats)] = Counter(digits).most_common(1)
-
-    if max_repeats <= 1:
-        return 1
 
     if len(codestr) != 6:
        return 2
