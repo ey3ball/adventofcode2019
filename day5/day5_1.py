@@ -82,7 +82,7 @@ while True:
         if state[args[0]] == 0:
             new_ptr = (True, state[args[1]])
     elif opcode == OPCODE_LESS_THAN:
-        if state[args[0]] <= state[args[1]]:
+        if state[args[0]] < state[args[1]]:
             state[args[2]] = 1
         else:
             state[args[2]] = 0
