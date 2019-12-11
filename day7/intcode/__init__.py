@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
 OPCODE_ADD = 1
 OPCODE_MULT = 2
