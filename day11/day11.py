@@ -1,7 +1,7 @@
  #!/usr/bin/env python3
 
 import sys
-from intcode import run_intcode
+from intcode import IntCodeInterpreter
 
 BLACK = 0
 WHITE = 1
@@ -58,19 +58,21 @@ class Robot:
         self.pos = self._add_position(self.pos, self.TURNS[self.current_direction])
 
 class IntCodeRobot(Robot):
-    def __init__(self, start_position, memmap):
+    def __init__(self, start_position, program):
         Robot.__init__(self, start_position)
         self.argv = []
-        self.intcode = run_intcode(memmap, self.argv)
+        self.interpreter = IntCodeInterpreter(program)
+        self.call_program = self.interpreter.run_gen()
         print("ran")
         self.i = 0
 
 
     def next(self, pixel_value):
         self.i += 1
-        self.argv.append(pixel_value)
-        color = next(self.intcode)
-        turn = next(self.intcode)
+
+        self.interpreter.push_input(pixel_value)
+        color = next(self.call_program)
+        turn = next(self.call_program)
 
         return (color, turn)
 
@@ -93,9 +95,8 @@ robot.run_once()
 robot.show_panel()
 
 intcode = sys.argv[1]
-init_memmap = [int(i) for i in intcode.split(",")]
 
-intbot = IntCodeRobot((64,64), init_memmap)
+intbot = IntCodeRobot((64,64), intcode)
 
 try:
     while True:
