@@ -63,12 +63,24 @@ class IntCodeRobot(Robot):
         self.argv = []
         self.intcode = run_intcode(memmap, self.argv)
         print("ran")
+        self.i = 0
+
 
     def next(self, pixel_value):
+        self.i += 1
         self.argv.append(pixel_value)
         color = next(self.intcode)
         turn = next(self.intcode)
 
+        # Bot seems to draw 3 blocks of 2 lines, but it overwrites itself after
+        # each block
+        #
+        # It's probably a bug in my code ...
+        # I fixed it below :D
+        if self.i == 87:
+            self.pos = (self.pos[0], self.pos[1] + 2)
+        if self.i == 168:
+            self.pos = (self.pos[0], self.pos[1] + 2)
         return (color, turn)
 
 # Test run
@@ -108,4 +120,4 @@ for y in range(len(ship[0])):
         if ship[x][y] != ".":
             counter += 1
 print(counter)
-
+print(intbot.i)
