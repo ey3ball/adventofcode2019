@@ -137,15 +137,12 @@ class IntCodeInterpreter(IntCodeVm):
             if f == FLAG_POSITION:
                 ptr = self.mem[pc + i + 1]
             elif f == FLAG_IMMEDIATE:
-                # Output parameters don't support immediate mode
                 assert op_args[i] != 1, "Output parameter in immediate mode"
                 ptr = pc + i + 1
             elif f == FLAG_RELATIVE:
                 ptr = self.mem[pc + i + 1] + self.reg["rbs"]
             else:
-                # Unknown flag
-
-                assert(False)
+                assert False, "Unknown flag value"
 
             # enlarge memory if we point outside of it
             if ptr >= len(self.mem):
