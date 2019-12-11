@@ -72,15 +72,6 @@ class IntCodeRobot(Robot):
         color = next(self.intcode)
         turn = next(self.intcode)
 
-        # Bot seems to draw 3 blocks of 2 lines, but it overwrites itself after
-        # each block
-        #
-        # It's probably a bug in my code ...
-        # I fixed it below :D
-        if self.i == 87:
-            self.pos = (self.pos[0], self.pos[1] + 2)
-        if self.i == 168:
-            self.pos = (self.pos[0], self.pos[1] + 2)
         return (color, turn)
 
 # Test run

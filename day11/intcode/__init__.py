@@ -19,7 +19,7 @@ instruction_info = {
     OPCODE_ADD: [0, 0, 1],
     OPCODE_MULT: [0, 0, 1],
     OPCODE_INPUT: [1],
-    OPCODE_OUTPUT: [1],
+    OPCODE_OUTPUT: [0],
     OPCODE_JUMP_IF_TRUE: [0, 0],
     OPCODE_JUMP_IF_FALSE: [0, 0],
     OPCODE_LESS_THAN: [0, 0, 1],
