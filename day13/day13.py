@@ -7,6 +7,22 @@ import sys
 import time
 import os
 
+"""
+This solution is convoluted because of a BUG I only discovered after finishing
+it. The Intcode VM uses a generator to yield output data.
+
+Since the output from the game produces threee consecutive values at a time, I
+decided it would be a good opportunity to give itertools.groupby a try.
+
+Sadly groupby in order to group inputs by 3, groupby implementation has to
+access the 4th element in the following loop :
+
+for _, group in groupby(enumerate(gen), key=lambda e: e[0] // 3):
+
+This means my loop is always one move behind which is one I ended up
+reverse-engineering the ball movement in order to predict its next position ...
+"""
+
 with open("day13.txt", "r") as f:
     program = f.readline().strip()
 
