@@ -46,7 +46,6 @@ class IntCodeVm:
             "rbs": 0,
             # Input
             "in": [],
-            "in_def": 0,
             # Output
             "out": []
         }
@@ -70,10 +69,7 @@ class IntCodeVm:
         return (a1 * a2,)
 
     def op_input(self):
-        if self.reg["in"] == []:
-            return (self.reg["in_def"], )
-        else:
-            return (self.reg["in"].pop(0),)
+        return (self.reg["in"].pop(0),)
 
     def op_output(self, a1):
         self.reg["out"].append(a1)

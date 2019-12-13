@@ -22,19 +22,43 @@ CURSOR = 3
 BALL = 4
 PADDLE = 3
 
+def wall(tile):
+    if tile == WALL or tile == BLOCK:
+        return True
+    else:
+        return False
+
+def bump(pos, vec, tiles):
+    # Side bump
+    side = (pos[0] + vec[0], pos[1])
+    if wall(tiles[side]):
+        if tiles[side] == BLOCK:
+            tiles[side] = 0
+        return bump(pos, (-vec[0], vec[1]), tiles)
+
+    # Top bump
+    top = (pos[0], pos[1] + vec[1])
+    if wall(tiles[top]):
+        if tiles[top] == BLOCK:
+            tiles[top] = 0
+        return bump(pos, (vec[0], -vec[1]), tiles)
+
+    # Diag bump
+    diag = (pos[0] + vec[0], pos[1] + vec[1])
+    if wall(tiles[diag]):
+        if tiles[diag] == BLOCK:
+            tiles[diag] = 0
+        return bump(pos, (-vec[0], -vec[1]), tiles)
+
+    return (pos[0] + vec[0], pos[1] + vec[1])
+
 def predict_next_ball_pos(prev, cur, tiles):
+    tiles = dict(tiles)
+
     dx = cur[0] - prev[0]
     dy = cur[1] - prev[1]
 
-    pred_x = cur[0] + dx
-    pred_y = cur[1] + dy
-    next_tile = tiles[(pred_x, pred_y)]
-    if next_tile == BLOCK:
-        pred_y = cur[1] - dy
-    if next_tile == WALL:
-        pred_x = cur[0] - dx
-
-    return (pred_x, pred_y)
+    return bump(cur, (dx, dy), tiles)
 
 def printt(tiles):
     for (x, y), tile in tiles.items():
@@ -49,32 +73,42 @@ tiles = OrderedDict()
 pos = None
 ball = None
 screen_ok = False
+step = 0
+interpreter.push_input(0)
+interpreter.push_input(0)
 for _, group in groupby(enumerate(gen), key=lambda e: e[0] // 3):
     update = [g[1] for g in group]
     pushed = ""
-    #print(update)
-    if update[2] == CURSOR:
+
+    if update[2] == CURSOR and pos is None:
         pos = update[0]
 
     if update[2] == BALL:
         if ball is not None:
             next_pos = predict_next_ball_pos(ball, (update[0], update[1]), tiles)
-
+            tiles[next_pos] = "P"
             if pos - next_pos[0] >= 1:
-                pushed = "left"
-
+                #pushed = "left"
                 if next_pos[0] != 1:
                     interpreter.push_input(-1)
+                    pos -= 1
+                else:
+                    interpreter.push_input(0)
             elif pos - next_pos[0] == 0:
+                # ball is just above us, don't move
                 if next_pos[1] != 19:
                     interpreter.push_input(next_pos[0] - ball[0])
+                    pos += next_pos[0] - ball[0]
+                else:
+                    interpreter.push_input(0)
             elif pos - next_pos[0] <= -1:
-                pushed = "right"
+                #pushed = "right"
 
                 if next_pos[0] != 36:
                     interpreter.push_input(1)
-            #elif pos - next_pos[0] == 0:
-            #    interpreter.push_input(update[0] - ball[0])
+                    pos += 1
+                else:
+                    interpreter.push_input(0)
 
         ball = (update[0], update[1])
 
@@ -84,29 +118,11 @@ for _, group in groupby(enumerate(gen), key=lambda e: e[0] // 3):
 
     tiles[(update[0], update[1])] = update[2]
     if screen_ok:
-        os.system("tput clear")
-        print(ball[0])
-        print(pushed)
+        #os.system("tput clear")
+        print(step)
         printt(tiles)
-        input("")
 
-#try:
-#    interpreter.run()
-#except:
-#    print(interpreter.reg["out"])
-#
-#xs = interpreter.reg["out"][0::3]
-#ys = interpreter.reg["out"][1::3]
-#tile = interpreter.reg["out"][2::3]
-#
-#for i in range(len(xs)):
-#    if tile[i] == 0:
-#        if (xs[i], ys[i]) in tiles:
-#            del tiles[(xs[i], ys[i])]
-#    else:
-#        tiles[(xs[i], ys[i])] = tile[i]
-#    #if tile[i] == 2:
-#    #    block += 1
-#    #    print(xs[i], ys[i], tile[i])
-#
-#print(tiles)
+        time.sleep(0.01)
+        #input("")
+
+        step += 1
