@@ -35,7 +35,11 @@ class IntCodeVm:
     Contains memory, a few registers and opcode implementations
     """
     def __init__(self, mem):
-        self.mem = list(mem)
+        self.initmem = list(mem)
+        self.reset()
+
+    def reset(self):
+        self.mem = list(self.initmem)
         self.reg = {
             # Status flags
             "pc_dirty": False,
