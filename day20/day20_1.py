@@ -131,7 +131,7 @@ while True:
         if new_point in portals.keys():
             if portals[new_point] == "ZZ":
                 print("Found ZZ")
-                print(distance)
+                print(distance - 2)
                 sys.exit(0)
             new_point = exit_portal(area, new_point, portals)
 
