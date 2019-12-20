@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from collections import Counter
+from collections import Counter, defaultdict
 import string
 import sys
 
@@ -38,37 +38,19 @@ class Area:
     def is_wall(self, pos):
         return self.get(pos) in string.ascii_uppercase
 
-    def can_walk(self, tile):
-        if tile == "#":
-            return False
-        elif tile in string.ascii_lowercase:
-            return True
-        elif tile in string.ascii_uppercase:
-            return False
-        elif tile == ".":
-            return True
-        elif tile == "@":
-            return True
-        else:
-            print(tile)
-            assert False
+    def in_area(self, pos):
+        return (pos[0] >= 0 and pos[0] < self.width
+                and pos[1] >= 0 and pos[1] < self.height)
 
     def vicinity(self, pos):
-        if self.is_key(pos):
-            return []
-
         candidates = [
             (pos[0] + 1, pos[1]),
             (pos[0] - 1, pos[1]),
             (pos[0], pos[1] + 1),
             (pos[0], pos[1] - 1)
         ]
-        return [p for p in candidates 
-                if p[0] >= 0
-                and p[0] < self.width
-                and p[1] >= 0
-                and p[1] < self.height
-                and self.can_walk(self.get(p))]
+        return [p for p in candidates
+                if self.in_area(p)]
 
 def find_obj(area, target):
     found = []
@@ -78,36 +60,94 @@ def find_obj(area, target):
     area.foreach(_find_obj)
     return found
 
+def find_keys(area):
+    found = set()
+    def _find_obj(x, y, obj):
+        if obj in string.ascii_lowercase:
+            found.add(obj)
+    area.foreach(_find_obj)
+    return found
+
+def walkable(tile, keys):
+    if tile == "#":
+        return False
+    elif tile in string.ascii_lowercase:
+        return True
+    elif tile.lower() in keys:
+        return True
+    elif tile in string.ascii_uppercase:
+        return False
+    elif tile == ".":
+        return True
+    elif tile == "@":
+        return True
+    else:
+        assert False
+
+def add_key(tile, keys):
+    if tile in string.ascii_lowercase:
+        return frozenset(keys | {tile})
+    else:
+        return keys
+
 area = Area(map_)
 area.show()
 start_pos = find_obj(area, "@")[0]
-visited = Counter({start_pos: 0})
+all_keys = find_keys(area)
+visited = defaultdict(list)
 distance = 0
-cur_points = [start_pos]
+cur_points = [(frozenset(), start_pos)]
+
+max_keys = 0
 
 print(start_pos)
+print(all_keys)
+import time
 while True:
     distance += 1
     next_points = []
-    for pos in cur_points:
-        next_points += [p for p in area.vicinity(pos) if p not in visited.keys()]
+    for keys, pos in cur_points:
+        next_points += [(add_key(area.get(p), keys), p)
+                        for p in area.vicinity(pos)
+                            #if ((keys, p) not in visited.keys()
+                                if walkable(area.get(p), keys)]
 
     if next_points == []:
+        print("out of solutions")
         break
 
+    #print(next_points)
+
+    actual_points = []
     for new_point in next_points:
-        visited[new_point] = distance
+        if new_point[0] == all_keys:
+            print("Collected all keys {} / took {} steps".format(all_keys, distance))
+            sys.exit(0)
+        if len(new_point[0]) > max_keys:
+            max_keys = len(new_point[0])
+            print("Got {} keys".format(max_keys))
+            print("Path heads {}".format(len(next_points)))
 
-    cur_points = next_points
+        useless = False
+        new_keys = set()
+        for keys in visited[new_point[1]]:
+            if new_point[0] <= keys:
+                useless = True
 
-for x in range(area.width):
-    for y in range(area.height):
-        if (x,y) in visited:
-            if area.get((x,y)) in string.ascii_lowercase:
-                sys.stderr.write(area.get((x,y)))
-            else:
-                sys.stderr.write(".")
-        else:
-            sys.stderr.write(" ")
-    sys.stderr.write("\n")
-sys.stderr.write("\n")
+            if keys <= new_point[0]:
+                continue
+            new_keys |= {keys}
+
+        if not useless:
+            new_keys |= {new_point[0]}
+            visited[new_point[1]] = new_keys
+            actual_points.append(new_point)
+
+    #print(visited)
+    #print(actual_points)
+    cur_points = actual_points
+
+p = (7,1)
+keys = frozenset()
+print(walkable(area.get(p), keys))
+print(add_key(area.get(p), keys))
