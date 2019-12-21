@@ -15,8 +15,8 @@ class Area:
 
     def show(self, pos=None):
         sys.stderr.write("AREA MAP\n\n")
-        for x, line in enumerate(self.map):
-            for y, obj in enumerate(line):
+        for y, line in enumerate(self.map):
+            for x, obj in enumerate(line):
                 if pos is not None and pos[0] == x and pos[1] == y:
                     sys.stderr.write("=")
                 else:
@@ -31,6 +31,9 @@ class Area:
 
     def get(self, pos):
         return self.map[pos[1]][pos[0]]
+
+    def set(self, pos, tile):
+        self.map[pos[1]][pos[0]] = tile
 
     def is_key(self, pos):
         return self.get(pos) in string.ascii_lowercase
@@ -90,64 +93,75 @@ def add_key(tile, keys):
     else:
         return keys
 
+class MazeBot:
+    def __init__(self, area, start_pos):
+        self.area = area
+
+        self.all_keys = find_keys(self.area)
+        self.visited = defaultdict(list)
+        self.distance = 0
+        self.cur_points = [(frozenset(), start_pos)]
+        self.max_keys = 0
+
+    def progress(self):
+        self.distance += 1
+        next_points = []
+        for keys, pos in self.cur_points:
+            next_points += [(add_key(self.area.get(p), keys), p)
+                            for p in self.area.vicinity(pos)
+                                #if ((keys, p) not in visited.keys()
+                                    if walkable(self.area.get(p), keys)]
+
+        if next_points == []:
+            print("out of options")
+            return -1
+
+        #print(next_points)
+
+        actual_points = []
+        for new_point in next_points:
+            if new_point[0] == self.all_keys:
+                print("Collected all keys {} / took {} steps"
+                        .format(self.all_keys, self.distance))
+                return 1
+            if len(new_point[0]) > self.max_keys:
+                self.max_keys = len(new_point[0])
+                print("Got {} keys".format(self.max_keys))
+                print("Path heads {}".format(len(next_points)))
+
+            useless = False
+            new_keys = set()
+            for keys in self.visited[new_point[1]]:
+                if new_point[0] <= keys:
+                    useless = True
+
+                if keys <= new_point[0]:
+                    continue
+                new_keys |= {keys}
+
+            if not useless:
+                new_keys |= {new_point[0]}
+                self.visited[new_point[1]] = new_keys
+                actual_points.append(new_point)
+
+        self.cur_points = actual_points
+        return 0
+
+
+
+
 area = Area(map_)
-area.show()
 start_pos = find_obj(area, "@")[0]
-all_keys = find_keys(area)
-visited = defaultdict(list)
-distance = 0
-cur_points = [(frozenset(), start_pos)]
 
-max_keys = 0
+# Fix center of maze for p2
+#for pos in area.vicinity(start_pos):
+#    area.set(pos, "#")
+#area.set(start_pos, "#")
+#for i, j in [(a, b) for a in [1, -1] for b in [1, -1]]:
+#    area.set((start_pos[0] + i, start_pos[1] + j), "@")
 
-print(start_pos)
-print(all_keys)
-import time
-while True:
-    distance += 1
-    next_points = []
-    for keys, pos in cur_points:
-        next_points += [(add_key(area.get(p), keys), p)
-                        for p in area.vicinity(pos)
-                            #if ((keys, p) not in visited.keys()
-                                if walkable(area.get(p), keys)]
+area.show()
 
-    if next_points == []:
-        print("out of solutions")
-        break
-
-    #print(next_points)
-
-    actual_points = []
-    for new_point in next_points:
-        if new_point[0] == all_keys:
-            print("Collected all keys {} / took {} steps".format(all_keys, distance))
-            sys.exit(0)
-        if len(new_point[0]) > max_keys:
-            max_keys = len(new_point[0])
-            print("Got {} keys".format(max_keys))
-            print("Path heads {}".format(len(next_points)))
-
-        useless = False
-        new_keys = set()
-        for keys in visited[new_point[1]]:
-            if new_point[0] <= keys:
-                useless = True
-
-            if keys <= new_point[0]:
-                continue
-            new_keys |= {keys}
-
-        if not useless:
-            new_keys |= {new_point[0]}
-            visited[new_point[1]] = new_keys
-            actual_points.append(new_point)
-
-    #print(visited)
-    #print(actual_points)
-    cur_points = actual_points
-
-p = (7,1)
-keys = frozenset()
-print(walkable(area.get(p), keys))
-print(add_key(area.get(p), keys))
+bot = MazeBot(area, start_pos)
+while bot.progress() == 0:
+    pass
