@@ -212,3 +212,26 @@ class IntCodeInterpreter(IntCodeVm):
         while self.reg["running"]:
             self.exec_next_op()
         return self
+
+
+class IntCodeAscii(IntCodeInterpreter):
+    def __init__(self, program_string):
+        intmem = [int(i) for i in program_string.split(",")]
+        IntCodeVm.__init__(self, intmem)
+
+    def send_line(self, cmd):
+        for c in cmd:
+            self.reg["in"].append(ord(c))
+        self.reg["in"].append(ord("\n"))
+
+    def get_lines(self):
+        lines = "".join([chr(i) for i in self.reg["out"]]).split("\n")
+        self.reg["out"] = []
+        return lines
+
+    def run_gen(self):
+        while self.reg["running"]:
+            self.exec_next_op()
+
+            if self.reg["out"] != [] and self.reg["out"][-1] == 10:
+                yield self.get_lines()[0]
