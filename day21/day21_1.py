@@ -16,7 +16,6 @@ droid.send_line("NOT B T")
 droid.send_line("AND D T")
 droid.send_line("OR T J")
 droid.send_line("NOT A T")
-droid.send_line("AND D T")
 droid.send_line("OR T J")
 droid.send_line("WALK")
 
