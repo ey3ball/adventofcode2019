@@ -50,6 +50,8 @@ class IntCodeVm:
             "rbs": 0,
             # Input
             "in": [],
+            "in_def": -1,
+            "starved": False,
             # Output
             "out": []
         }
@@ -73,7 +75,11 @@ class IntCodeVm:
         return (a1 * a2,)
 
     def op_input(self):
-        return (self.reg["in"].pop(0),)
+        if self.reg["in"] != []:
+            return (self.reg["in"].pop(0),)
+        else:
+            self.reg["starved"] = True
+            return (self.reg["in_def"],)
 
     def op_output(self, a1):
         self.reg["out"].append(a1)
@@ -201,6 +207,10 @@ class IntCodeInterpreter(IntCodeVm):
             self.exec_next_op()
             while self.reg["out"] != []:
                 yield self.reg["out"].pop(0)
+
+            if self.reg["starved"] == True:
+                yield None
+                self.reg["starved"] = False
 
     def run(self, argv=None):
         """ Run an intcode program until it exits. You should provide enough
