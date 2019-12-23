@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+FINAL_POSITION = 4086
+DECK_SIZE = 10007
+
 DEAL_INC="deal with increment "
 NEW_STACK="deal into new stack"
 CUT="cut "
@@ -14,37 +17,25 @@ def parse(l):
     else:
         sys.stderr.write("Parse error ! {}\n".format(l))
 
-def new_stack(stack):
-    return list(reversed(stack))
+def new_stack(params):
+    a,b = params
+    return (-a, -b - 1)
 
-def cut(stack, n):
-    return stack[n:] + stack[:n]
+def cut(params, n):
+    a,b = params
+    return (a, b - n)
 
-def deal(stack, n):
-    new_stack = [-1] * len(stack)
-    for i in range(0, len(stack)):
-        new_stack[i*n % len(stack)] = stack[i]
-    return new_stack
-
-assert cut(list(range(0,10)), 3) == [3,4,5,6,7,8,9,0,1,2] 
-assert cut(list(range(0,10)), -3) == [7,8,9,0,1,2,3,4,5,6] 
-assert new_stack(list(range(0,10))) == [9,8,7,6,5,4,3,2,1,0] 
-assert deal(list(range(0,10)), 3) == [0, 7, 4, 1, 8, 5, 2, 9, 6, 3] 
+def deal(params, n):
+    a,b = params
+    return (n * a, n * b)
 
 with open("day22_i.txt") as f:
     shuffle = [parse(l) for l in f.readlines()]
-print(shuffle)
 
-stack = list(range(0,10007))
+ab = (1, 0)
 for op, arg in shuffle:
-    stack = op(stack, *arg)
-    if -1 in stack:
-        print(op, arg)
-        print("wtf")
-        break
+    ab = op(ab, *arg)
+    ab = (ab[0] % DECK_SIZE, ab[1] % DECK_SIZE)
+print(ab)
 
-assert(sorted(stack) == list(range(0,10007)))
-
-for i, card in enumerate(stack):
-    if card == 2019:
-        print(i)
+print((ab[0] * 2019 + ab[1]) % DECK_SIZE)
