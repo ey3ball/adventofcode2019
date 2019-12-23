@@ -18,7 +18,12 @@ for i, nic in enumerate(_nics):
     nic.__dict__.update({'i': i})
     nics.append((nic, nic.run_gen()))
 
+old_nat = [-1, -1]
+nat = []
+delivered = []
+
 while True:
+    idle = True
     for nic, nic_gen in nics:
         packet = []
        
@@ -28,6 +33,7 @@ while True:
             if out == None:
                 starved = True
                 break
+            idle = False
             packet.append(out)
 
         if starved:
@@ -38,6 +44,17 @@ while True:
             nics[packet[PCK_ADDR]][0].push_input(packet[PCK_Y])
 
         if packet[PCK_ADDR] == 255:
-            print("Received packet for 255")
-            print(packet)
+            nat = [packet[PCK_X], packet[PCK_Y]]
+            #print("Received packet for 255")
+            #print(packet)
+            #sys.exit(0)
+
+    if idle and nat != []:
+        print("nat {}".format(nat))
+        if nat != [] and nat[1] == old_nat[1]:
+            print(nat)
             sys.exit(0)
+        else:
+            old_nat = nat
+        nics[0][0].push_input(nat[0])
+        nics[0][0].push_input(nat[1])
