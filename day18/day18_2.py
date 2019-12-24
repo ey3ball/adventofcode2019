@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 import string
 import sys
 
-with open("day18_7.txt", "r") as f:
+with open("day18_i.txt", "r") as f:
     map_ = [[c for c in l if c != '\n'] for l in f.readlines()]
 
 class Area:
@@ -86,21 +86,22 @@ def find_keys(area):
     area.foreach(_find_obj)
     return found
 
-def walkable(tile, keys):
+def walkable(tile, keys, doors=string.ascii_uppercase):
     if tile == "#":
         return False
     elif tile in string.ascii_lowercase:
         return True
     elif tile.lower() in keys:
         return True
-    elif tile in string.ascii_uppercase:
+    elif tile in doors:
         return False
     elif tile == ".":
         return True
     elif tile == "@":
         return True
     else:
-        assert False
+        return True
+        #assert False
 
 def add_key(tile, keys):
     if tile in string.ascii_lowercase:
@@ -142,24 +143,25 @@ class MazeBot:
         self.area = area
 
         self.all_keys = find_keys(self.area)
+        self.all_doors = set([c.upper() for c in list(self.all_keys)])
         self.visited = defaultdict(list)
         self.distance = 0
         self.cur_points = [(frozenset(), 0, start_pos)]
         self.max_keys = 0
         self.done = False
-        self.static_points = []
+        self.static_points = set()
 
     def state(self):
         if self.done:
             return [(self.all_keys, self.distance)]
         else:
-            return [(keys, dst) for (keys, dst, _) in self.static_points if dst != 0]
+            return [(keys, dst) for (keys, dst, _) in list(self.static_points) if dst != 0]
 
     def inject(self, state):
         if self.done:
             return 0
 
-        for keys, dst, pos in self.static_points:
+        for keys, dst, pos in list(self.static_points):
             for (ext_keys, ext_dst) in state:
                 self.cur_points.append((keys | ext_keys, dst + ext_dst, pos)) 
 
@@ -168,13 +170,14 @@ class MazeBot:
         for new_point in points:
             if new_point[0] >= self.all_keys:
                 self.distance = new_point[1]
-                print("Collected all keys {} / took {} steps"
+                sys.stderr.write("Collected all keys {} / took {} steps\n"
                         .format(self.all_keys, new_point[1]))
                 self.done = True
                 return 1
             if len(new_point[0]) > self.max_keys:
                 self.max_keys = len(new_point[0])
-                print("Got {} keys".format(self.max_keys))
+                #sys.stderr.write("Got {} keys {}\n".format(self.max_keys, new_point[0]))
+                sys.stderr.write("Including {}\n".format(self.all_keys & new_point[0]))
                 print("Path heads {}".format(len(points)))
 
             useless = False
@@ -202,7 +205,8 @@ class MazeBot:
             next_points += [(add_key(self.area.get(p), keys), dst + 1, p)
                             for p in self.area.vicinity(pos)
                                 #if ((keys, p) not in visited.keys()
-                                    if walkable(self.area.get(p), keys)]
+                                    if walkable(self.area.get(p), keys,
+                                        doors=self.all_doors)]
 
         nearby_doors = set()
         # Keep points of interest available. When we see a wall, just wait
@@ -213,7 +217,7 @@ class MazeBot:
                      if self.area.is_door(p)]
             if doors != []:
                 nearby_doors |= set(doors)
-                self.static_points.append((keys, dst, pos))
+                self.static_points |= {(frozenset(self.all_keys & keys), dst, pos)}
 
         actual_points = self.filter_useless(next_points)
         if actual_points == []:
@@ -259,6 +263,9 @@ print(start_pos)
 # Instantiate vault bots
 bots = [MazeBot(area, pos) for pos, area in sub_areas]
 
+for bot in bots:
+    sys.stderr.write("Keys {}\n".format(bot.all_keys))
+
 for i, bot in enumerate(bots):
     print("Advance bot {}".format(i))
     while bot.progress() == 0:
@@ -273,6 +280,7 @@ for it in range(0,10):
 
         print("Advance bot {}".format(i))
         print("Inject other bots state {}".format(len(inject_state)))
+        #print(inject_state)
 
         bot.inject(inject_state)
         while bot.progress() == 0:
@@ -286,6 +294,7 @@ for it in range(0,10):
                 all_done = False
 
         if all_done:
+            print("Collected all keys accross bots")
             sys.exit(0)
 
         #print(bot.state())
